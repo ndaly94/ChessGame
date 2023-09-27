@@ -1,16 +1,49 @@
-const express = require('express');
+const http = require('http');
+const fs = require('fs');
 const path = require('path');
+const port = process.env.PORT || 3000;
 
-const app = express();
-const port = process.env.PORT || 8080;
+const server = http.createServer((req, res) => {
+    let filePath = path.join(
+        __dirname,
+        "public",
+        req.url === "/" ? "index.html" : req.url
+    );
 
-app.use(express.static(path.join(__dirname, 'css')));
-app.use(express.static(path.join(__dirname, 'js')));
+    let extName = path.extname(filePath);
+    let contentType = 'text/html';
 
-// sendFile will go here
-app.use('/', function(req, res, next) {
-    res.sendFile(path.join(__dirname, '/index.html'));
+    switch (extName) {
+        case '.css':
+            contentType = 'text/css';
+            break;
+        case '.js':
+            contentType = 'text/javascript';
+            break;
+        case '.json':
+            contentType = 'application/json';
+            break;
+        case '.png':
+            contentType = 'image/png';
+            break;
+        case '.jpg':
+            contentType = 'image/jpg';
+            break;
+    }
+
+    console.log(`File path: ${filePath}`);
+    console.log(`Content-Type: ${contentType}`)
+
+    res.writeHead(200, {'Content-Type': contentType});
+
+    const readStream = fs.createReadStream(filePath);
+    readStream.pipe(res);
 });
 
-app.listen(port);
-console.log('Server started at http://localhost:' + port);
+server.listen(port, (err) => {
+    if (err) {
+        console.log(`Error: ${err}`)
+    } else {
+        console.log(`Server listening at port ${port}...`);
+    }
+});
